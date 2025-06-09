@@ -24,16 +24,25 @@ function Trimester() {
 
 	const fetchTrimesterData = async () => {
 		try {
+			setIsLoading(true);
 			const response = await axios.get("http://localhost:5000/api/trimester");
+			console.log("Trimester data received:", response.data);
 			setTrimesterData(response.data);
 		} catch (error) {
 			console.error("Error fetching trimester data:", error);
 			setError("Gagal memuat data trimester");
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
 	const handleTrimesterChange = (trimesterId) => {
-		setSelectedTrimester(trimesterId);
+		// Untuk checkbox behavior - jika sudah terpilih dan diklik lagi, maka unselect
+		if (selectedTrimester === trimesterId) {
+			setSelectedTrimester("");
+		} else {
+			setSelectedTrimester(trimesterId);
+		}
 		setError("");
 	};
 
@@ -51,6 +60,32 @@ function Trimester() {
 		console.log("Selected trimester:", selectedTrimester);
 		navigate("/Diagnosa_1");
 	};
+
+	if (isLoading) {
+		return (
+			<div className="bg-white text-dark">
+				<div style={{ backgroundColor: "#fef4e9", padding: "2rem" }}>
+					<h2 className="fw-bold mb-4">Diagnosis Penyakit</h2>
+					<p className="text-muted" style={{ maxWidth: "600px" }}>
+						Sebelum diagnosa penyakit ibu hamil, mohon isi form identitas
+						terlebih dahulu untuk membantu kami memberikan diagnosis yang lebih
+						akurat dan spesifik. Kami akan menjaga semua kerahasiaan informasi
+						yang anda berikan dan hanya akan kami gunakan untuk kepentingan
+						diagnosis.
+					</p>
+				</div>
+				<div
+					className="d-flex justify-content-center align-items-center"
+					style={{ height: "400px" }}
+				>
+					<div className="spinner-border text-danger" role="status">
+						<span className="visually-hidden">Loading...</span>
+					</div>
+				</div>
+				<Footer />
+			</div>
+		);
+	}
 
 	return (
 		<div className="bg-white text-dark">
@@ -76,46 +111,58 @@ function Trimester() {
 						</div>
 					)}
 
-					<form
-						className="mx-auto"
-						style={{ maxWidth: "600px" }}
-						onSubmit={handleSubmit}
-					>
-						{trimesterData.map((trimester) => (
-							<div
-								key={trimester.id}
-								className="d-flex justify-content-between align-items-center py-2"
-							>
-								<label
-									htmlFor={`trimester${trimester.id}`}
-									className="form-label mb-0 small"
-								>
-									{trimester.id}. {trimester.nama_trimester}
-								</label>
-								<input
-									type="radio"
-									id={`trimester${trimester.id}`}
-									name="trimester"
-									value={trimester.id}
-									className="form-check-input"
-									checked={selectedTrimester === trimester.id.toString()}
-									onChange={(e) => handleTrimesterChange(e.target.value)}
-									disabled={isLoading}
-								/>
-							</div>
-						))}
-
-						<div className="text-end mt-3">
-							<button
-								type="submit"
-								className="btn btn-sm text-white"
-								style={{ backgroundColor: "#c96a6a" }}
-								disabled={isLoading}
-							>
-								{isLoading ? "Memproses..." : "Selanjutnya"}
-							</button>
+					{trimesterData.length === 0 && !isLoading ? (
+						<div className="alert alert-warning text-center" role="alert">
+							Tidak ada data trimester tersedia
 						</div>
-					</form>
+					) : (
+						<form
+							className="mx-auto"
+							style={{ maxWidth: "600px" }}
+							onSubmit={handleSubmit}
+						>
+							{trimesterData.map((trimester) => (
+								<div
+									key={trimester.id}
+									className="d-flex justify-content-between align-items-center py-2"
+								>
+									<label
+										htmlFor={`trimester${trimester.id}`}
+										className="form-label mb-0 small"
+									>
+										{trimester.id}. {trimester.nama_trimester}
+									</label>
+									<input
+										type="checkbox"
+										id={`trimester${trimester.id}`}
+										name="trimester"
+										value={trimester.id}
+										className="form-check-input"
+										checked={selectedTrimester === trimester.id.toString()}
+										onChange={(e) => {
+											if (e.target.checked) {
+												handleTrimesterChange(e.target.value);
+											} else {
+												setSelectedTrimester("");
+											}
+										}}
+										disabled={isLoading}
+									/>
+								</div>
+							))}
+
+							<div className="text-end mt-3">
+								<button
+									type="submit"
+									className="btn btn-sm text-white"
+									style={{ backgroundColor: "#c96a6a" }}
+									disabled={isLoading}
+								>
+									{isLoading ? "Memproses..." : "Selanjutnya"}
+								</button>
+							</div>
+						</form>
+					)}
 				</section>
 
 				<section className="px-3 pb-5 mx-auto" style={{ maxWidth: "600px" }}>
